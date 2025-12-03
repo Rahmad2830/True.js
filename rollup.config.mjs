@@ -5,17 +5,17 @@ export default {
 	input: 'src/main.js',
 	output: [
   	{
-  		file: 'dist/bundle.min.js',
+  		file: 'dist/cjs.min.js',
   		format: 'cjs',
   	},
   	{
-  		file: 'dist/True.min.js',
+  		file: 'dist/esm.min.js',
   		format: 'esm',
   	},
   	{
-  	  file: 'dist/Truejs.min.js',
+  	  file: 'dist/cdn.min.js',
   	  format: 'iife',
-  	  name: 'Truejs',
+  	  name: 'validation',
   	}
   ],
   plugins: [

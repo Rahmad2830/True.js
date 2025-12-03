@@ -1,9 +1,11 @@
 {
   "devDependencies": {
     "rollup": "^4.53.3",
-    "rollup-plugin-esbuild": "^6.2.1"
+    "rollup-plugin-esbuild": "^6.2.1",
+    "vitest": "^4.0.15"
   },
   "scripts": {
+    "test": "vitest",
     "build": "rollup --config"
   }
 }
