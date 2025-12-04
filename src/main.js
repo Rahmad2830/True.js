@@ -1,81 +1,126 @@
+import required from './rules/required.js'
+import numeric from './rules/numeric.js'
+import min from './rules/min.js'
+import max from './rules/max.js'
+import email from './rules/email.js'
+import regex from './rules/regex.js'
+import date from './rules/date.js'
+import bool from './rules/bool.js'
+import min_num from './rules/min_num.js'
+import max_num from './rules/max_num.js'
+import same from './rules/same.js'
+
+const validators = {
+  required,
+  numeric,
+  min,
+  max,
+  email,
+  regex,
+  date,
+  bool,
+  min_num,
+  max_num,
+  same
+}
+
 export default function validation(data = {}, rules = {}) {
   let error = {}
-  let fieldRules = []
   
   for(const key in rules) {
     error[key] = []
-    fieldRules = rules[key]
-    for(const rl of fieldRules) {
-      if(rl === "required" && (data[key] === '' || data[key] === null || data[key] === undefined)) {
-        error[key].push("This field is required")
-      }
-      if(rl === "number") {
-        if(isNaN(Number(data[key]))) {
-          error[key].push("Value must be a number")
-        }
-      }
-      if(rl.startsWith("min:")) {
-        const len = parseInt(rl.split(":")[1])
-        if(String(data[key]).length < len) {
-          error[key].push(`minimum length ${len} characters`)
-        }
-      }
-      if(rl.startsWith("max:")) {
-        const len = parseInt(rl.split(":")[1])
-        if(String(data[key]).length > len) {
-          error[key].push(`maximum length ${len} characters`)
-        }
-      }
-      if(rl === "email") {
-        const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-        if(!emailRegex.test(data[key])) {
-          error[key].push("Email not valid")
-        }
-      }
-      if(rl === "url") {
-        const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/;
-        if(!urlRegex.test(data[key])) {
-          error[key].push("Url not valid")
-        }
-      }
-      if(rl === "phone") {
-        const phoneRegex = /^(?:\+?\d{10,15})$/
-        if(!phoneRegex.test(data[key])) {
-          error[key].push("Phone number is not valid")
-        }
-      }
-      if (rl === "bool") {
-        const val = String(data[key]).toLowerCase()
-        const validValues = ["true", "false", "1", "0", "on", "off", "yes", "no"]
-        if (!validValues.includes(val)) {
-          error[key].push("This field must be a boolean")
-        }
-      }
-      if (rl === "date" && data[key]) {
-        const d = new Date(data[key]);
-        if (isNaN(d.getTime())) {
-          error[key].push("Invalid date format")
-        }
-      }
-      if(rl.startsWith("min_num:")) {
-        const val = parseInt(rl.split(":")[1])
-        if(Number(data[key]) < val) {
-          error[key].push(`Min value is ${val}`)
-        }
-      }
-      if(rl.startsWith("max_num:")) {
-        const val = parseInt(rl.split(":")[1])
-        if(Number(data[key]) > val) {
-          error[key].push(`Max value is ${val}`)
-        }
-      }
-      if(rl.startsWith("same:")) {
-        const otherField = rl.split(":")[1]
-        if(data[key] !== data[otherField]) {
-          error[key].push(`This field value must match ${otherField}`)
-        }
-      }
+    
+    for(const rl of rules[key]) {
+      const [ruleName, param, comment] = rl.split(":")
+      const result = validators[ruleName]?.(data[key], param, comment)
+      if(result) error[key].push(result)
     }
   }
   return error
 }
+
+// export default function bool(value) {
+//   const val = String(value).toLowerCase()
+//   const validValues = ["true", "false", "1", "0", "on", "off", "yes", "no"]
+//   if(!validValues.includes(val)) {
+//     return "Value must be a boolean"
+//   }
+//   return null
+// }
+
+// export default function date(value) {
+//   const d = new Date(value)
+//   if(isNaN(d.getTime())) {
+//     return "Date is not valid"
+//   }
+//   return null
+// }
+
+// export default function email(value) {
+//   const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+//   if(!emailRegex.test(value)) {
+//     return "Email is not valid"
+//   }
+//   return null
+// }
+
+// export default function min(value, param) {
+//   if(value.length > parseInt(param)) {
+//     return `Maximum length is ${param}`
+//   }
+//   return null
+// }
+
+// export default function min_num(value, param) {
+//   if(Number(value) > parseInt(param)) {
+//     return `Maximum value is ${param}`
+//   }
+//   return null
+// }
+
+// export default function min(value, param) {
+//   if(value.length < parseInt(param)) {
+//     return `Minimum length is ${param}`
+//   }
+//   return null
+// }
+
+// export default function min_num(value, param) {
+//   if(Number(value) < parseInt(param)) {
+//     return `Minimum value is ${param}`
+//   }
+//   return null
+// }
+
+// export default function numeric(value) {
+//   if(isNaN(Number(value))) {
+//     return "Value must be a number"
+//   }
+//   return null
+// }
+
+// export default function regex(value, param, comment) {
+//   try {
+//     const Regex = new RegExp(param)
+//     if(!Regex.test(value)) {
+//       return comment
+//     }
+//     return null
+//   } catch (err) {
+//     return "Invalid regex pattern"
+//   }
+// }
+
+// export default function required(value) {
+//   if(String(value).trim() === '' || value === null || value === undefined) {
+//     return "This field is required"
+//   }
+//   return null
+// }
+
+// export default function same(value, param) {
+//   const otherField = String(param)
+//   if(value !== otherField) {
+//     return `This field value must match ${otherField}`
+//   }
+// }

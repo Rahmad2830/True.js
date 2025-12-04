@@ -1,5 +1,6 @@
 // rollup.config.mjs
 import esbuild from "rollup-plugin-esbuild"
+import { dts } from "rollup-plugin-dts"
 
 export default {
 	input: 'src/main.js',
@@ -13,6 +14,10 @@ export default {
   		format: 'esm',
   	},
   	{
+  		file: 'dist/esm.min.d.ts',
+  		format: 'esm',
+  	},
+  	{
   	  file: 'dist/cdn.min.js',
   	  format: 'iife',
   	  name: 'validation',
@@ -21,6 +26,7 @@ export default {
   plugins: [
     esbuild({
       minify: true
-    })
+    }),
+    dts()
   ]
 };
