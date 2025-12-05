@@ -31,8 +31,23 @@ export default function validation(data = {}, rules = {}) {
     error[key] = []
     
     for(const rl of rules[key]) {
-      const [ruleName, param, comment] = rl.split(":")
-      const result = validators[ruleName]?.(data[key], param, comment)
+      let result
+      const parts = rl.split(":")
+      const ruleName = parts.shift()
+      
+      let param
+      let comment
+      if(parts.length === 1) {
+        param = parts[0]
+      } else if(parts.length > 1) {
+        comment = parts.pop()
+        param = parts.join(":")
+      }
+      if(ruleName === "same") {
+        result = validators[ruleName]?.(data[key], param, data[param])
+      } else {
+        result = validators[ruleName]?.(data[key], param, comment)
+      }
       if(result) error[key].push(result)
     }
   }
@@ -118,9 +133,8 @@ export default function validation(data = {}, rules = {}) {
 //   return null
 // }
 
-// export default function same(value, param) {
-//   const otherField = String(param)
+// export default function same(value, param, otherField) {
 //   if(value !== otherField) {
-//     return `This field value must match ${otherField}`
+//     return `This field value must match ${String(param)}`
 //   }
 // }

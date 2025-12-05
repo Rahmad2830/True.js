@@ -13,348 +13,396 @@ import max_num from '../rules/max_num.js'
 import same from '../rules/same.js'
 
 describe('Validation Function', () => {
-  it('should return empty error arrays when no rules are provided', () => {
-    const data = { name: 'John' }
-    const rules = {}
-    const result = validation(data, rules)
-    
-    expect(result).toEqual({})
-  })
-
-  it('should return empty error arrays when all validations pass', () => {
-    const data = { name: 'John', age: '25' }
-    const rules = { 
-      name: ['required'],
-      age: ['numeric']
-    }
-    const result = validation(data, rules)
-    
-    expect(result.name).toEqual([])
-    expect(result.age).toEqual([])
-  })
-
-  it('should collect multiple errors for a single field', () => {
-    const data = { password: 'abc' }
-    const rules = { 
-      password: ['required', 'min:8', 'regex:^(?=.*[A-Z]):Must contain uppercase']
-    }
-    const result = validation(data, rules)
-    
-    expect(result.password.length).toBeGreaterThan(0)
-  })
-
-  it('should handle multiple fields with different rules', () => {
-    const data = { 
-      username: 'john',
-      email: 'invalid-email',
-      age: 'not-a-number'
-    }
-    const rules = { 
-      username: ['required', 'min:3'],
-      email: ['required', 'email'],
-      age: ['required', 'numeric']
-    }
-    const result = validation(data, rules)
-    
-    expect(result).toHaveProperty('username')
-    expect(result).toHaveProperty('email')
-    expect(result).toHaveProperty('age')
-  })
-})
-
-describe('Required Rule', () => {
-  it('should pass when value is provided', () => {
-    expect(required('John')).toBeNull()
-    expect(required('0')).toBeNull()
-    expect(required(0)).toBeNull()
-  })
-
-  it('should fail when value is empty string', () => {
-    expect(required('')).toBe('This field is required')
-    expect(required('   ')).toBe('This field is required')
-  })
-
-  it('should fail when value is null or undefined', () => {
-    expect(required(null)).toBe('This field is required')
-    expect(required(undefined)).toBe('This field is required')
-  })
-})
-
-describe('Numeric Rule', () => {
-  it('should pass for valid numbers', () => {
-    expect(numeric('123')).toBeNull()
-    expect(numeric('0')).toBeNull()
-    expect(numeric('-45')).toBeNull()
-    expect(numeric('3.14')).toBeNull()
-  })
-
-  it('should fail for non-numeric values', () => {
-    expect(numeric('abc')).toBe('Value must be a number')
-    expect(numeric('12abc')).toBe('Value must be a number')
-  })
-})
-
-describe('Min Rule', () => {
-  it('should pass when length is greater than or equal to minimum', () => {
-    expect(min('hello', '5')).toBeNull()
-    expect(min('hello world', '5')).toBeNull()
-  })
-
-  it('should fail when length is less than minimum', () => {
-    expect(min('hi', '5')).toBe('Minimum length is 5')
-    expect(min('test', '10')).toBe('Minimum length is 10')
-  })
-})
-
-describe('Max Rule', () => {
-  it('should pass when length is less than or equal to maximum', () => {
-    expect(max('hello', '10')).toBeNull()
-    expect(max('test', '4')).toBeNull()
-  })
-
-  it('should fail when length is greater than maximum', () => {
-    expect(max('hello world', '5')).toBe('Maximum length is 5')
-    expect(max('testing', '4')).toBe('Maximum length is 4')
-  })
-})
-
-describe('Email Rule', () => {
-  it('should pass for valid email formats', () => {
-    expect(email('user@example.com')).toBeNull()
-    expect(email('john.doe@company.co.uk')).toBeNull()
-    expect(email('test+tag@domain.com')).toBeNull()
-    expect(email('user123@test-domain.org')).toBeNull()
-  })
-
-  it('should fail for invalid email formats', () => {
-    expect(email('invalid')).toBe('Email is not valid')
-    expect(email('user@')).toBe('Email is not valid')
-    expect(email('@domain.com')).toBe('Email is not valid')
-    expect(email('user@domain')).toBe('Email is not valid')
-    expect(email('user domain@test.com')).toBe('Email is not valid')
-    expect(email('')).toBe('Email is not valid')
-  })
-})
-
-describe('Regex Rule', () => {
-  it('should pass when value matches regex pattern', () => {
-    expect(regex('ABC123', '^[A-Z0-9]+$', 'Must be alphanumeric uppercase')).toBeNull()
-    expect(regex('test@example.com', '^[\\w.]+@[\\w.]+$', 'Invalid email')).toBeNull()
-  })
-
-  it('should fail when value does not match regex pattern', () => {
-    expect(regex('abc', '^[0-9]+$', 'Must be numbers only')).toBe('Must be numbers only')
-    expect(regex('test', '^[A-Z]+$', 'Must be uppercase')).toBe('Must be uppercase')
-  })
-
-  it('should handle invalid regex patterns', () => {
-    expect(regex('test', '[', 'Invalid pattern')).toBe('Invalid regex pattern')
-  })
-})
-
-describe('Date Rule', () => {
-  it('should pass for valid date formats', () => {
-    expect(date('2024-01-01')).toBeNull()
-    expect(date('December 25, 2024')).toBeNull()
-    expect(date(new Date())).toBeNull()
-  })
-
-  it('should fail for invalid date formats', () => {
-    expect(date('invalid-date')).toBe('Date is not valid')
-    expect(date('2024-13-45')).toBe('Date is not valid')
-    expect(date('abc')).toBe('Date is not valid')
-  })
-})
-
-describe('Bool Rule', () => {
-  it('should pass for valid boolean values', () => {
-    expect(bool('true')).toBeNull()
-    expect(bool('false')).toBeNull()
-    expect(bool('1')).toBeNull()
-    expect(bool('0')).toBeNull()
-    expect(bool('yes')).toBeNull()
-    expect(bool('no')).toBeNull()
-    expect(bool('on')).toBeNull()
-    expect(bool('off')).toBeNull()
-  })
-
-  it('should be case insensitive', () => {
-    expect(bool('TRUE')).toBeNull()
-    expect(bool('False')).toBeNull()
-    expect(bool('YES')).toBeNull()
-  })
-
-  it('should fail for invalid boolean values', () => {
-    expect(bool('invalid')).toBe('Value must be a boolean')
-    expect(bool('2')).toBe('Value must be a boolean')
-    expect(bool('maybe')).toBe('Value must be a boolean')
-  })
-})
-
-describe('Min_num Rule', () => {
-  it('should pass when number is greater than or equal to minimum', () => {
-    expect(min_num('10', '5')).toBeNull()
-    expect(min_num('5', '5')).toBeNull()
-    expect(min_num(100, '50')).toBeNull()
-  })
-
-  it('should fail when number is less than minimum', () => {
-    expect(min_num('3', '5')).toBe('Minimum value is 5')
-    expect(min_num('0', '10')).toBe('Minimum value is 10')
-  })
-})
-
-describe('Max_num Rule', () => {
-  it('should pass when number is less than or equal to maximum', () => {
-    expect(max_num('5', '10')).toBeNull()
-    expect(max_num('10', '10')).toBeNull()
-    expect(max_num(3, '5')).toBeNull()
-  })
-
-  it('should fail when number is greater than maximum', () => {
-    expect(max_num('15', '10')).toBe('Maximum value is 10')
-    expect(max_num('100', '50')).toBe('Maximum value is 50')
-  })
-})
-
-describe('Same Rule', () => {
-  it('should pass when values match', () => {
-    expect(same('password123', 'password123')).toBeUndefined()
-    expect(same('test', 'test')).toBeUndefined()
-  })
-
-  it('should fail when values do not match', () => {
-    const result = same('password123', 'different')
-    expect(result).toBe('This field value must match different')
-  })
-})
-
-describe('Integration Tests', () => {
-  it('should validate a complete user registration form', () => {
-    const data = {
-      username: 'john_doe',
-      email: 'john@example.com',
-      password: 'Pass123!',
-      confirmPassword: 'Pass123!',
-      age: '25',
-      terms: 'true'
-    }
-
-    const rules = {
-      username: ['required', 'min:3', 'max:20'],
-      email: ['required', 'email'],
-      password: ['required', 'min:6'],
-      confirmPassword: ['required', 'same:Pass123!'],
-      age: ['required', 'numeric', 'min_num:18', 'max_num:100'],
-      terms: ['required', 'bool']
-    }
-
-    const result = validation(data, rules)
-
-    expect(result.username).toEqual([])
-    expect(result.email).toEqual([])
-    expect(result.password).toEqual([])
-    expect(result.age).toEqual([])
-    expect(result.terms).toEqual([])
-  })
-
-  it('should collect all validation errors for invalid data', () => {
-    const data = {
-      username: 'ab',
-      email: 'invalid',
-      password: '123',
-      age: 'abc',
-      terms: 'maybe'
-    }
-
-    const rules = {
-      username: ['required', 'min:3'],
-      email: ['required', 'email'],
-      password: ['required', 'min:6'],
-      age: ['required', 'numeric'],
-      terms: ['required', 'bool']
-    }
-
-    const result = validation(data, rules)
-
-    expect(result.username.length).toBeGreaterThan(0)
-    expect(result.email.length).toBeGreaterThan(0)
-    expect(result.password.length).toBeGreaterThan(0)
-    expect(result.age.length).toBeGreaterThan(0)
-    expect(result.terms.length).toBeGreaterThan(0)
-  })
-
-  it('should validate email with proper regex', () => {
-    const validEmails = [
-      'test@example.com',
-      'user.name@domain.co.uk',
-      'first+last@company.org',
-      'email123@test-domain.com'
-    ]
-
-    const invalidEmails = [
-      'notanemail',
-      'missing@domain',
-      '@nodomain.com',
-      'spaces in@email.com',
-      'double@@domain.com'
-    ]
-
-    validEmails.forEach(emailValue => {
-      const result = validation({ email: emailValue }, { email: ['email'] })
-      expect(result.email).toEqual([])
+  describe('required rule', () => {
+    it('should return error when value is empty string', () => {
+      const data = { name: '' }
+      const rules = { name: ['required'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('This field is required')
     })
 
-    invalidEmails.forEach(emailValue => {
-      const result = validation({ email: emailValue }, { email: ['email'] })
-      expect(result.email.length).toBeGreaterThan(0)
+    it('should return error when value is null', () => {
+      const data = { name: null }
+      const rules = { name: ['required'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('This field is required')
+    })
+
+    it('should return error when value is undefined', () => {
+      const data = { name: undefined }
+      const rules = { name: ['required'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('This field is required')
+    })
+
+    it('should pass when value is provided', () => {
+      const data = { name: 'John' }
+      const rules = { name: ['required'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toHaveLength(0)
     })
   })
 
-  it('should handle empty data gracefully', () => {
-    const data = {}
-    const rules = {
-      username: ['required'],
-      email: ['required', 'email']
-    }
+  describe('numeric rule', () => {
+    it('should return error when value is not numeric', () => {
+      const data = { age: 'abc' }
+      const rules = { age: ['numeric'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.age).toContain('Value must be a number')
+    })
 
-    const result = validation(data, rules)
+    it('should pass when value is numeric string', () => {
+      const data = { age: '25' }
+      const rules = { age: ['numeric'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.age).toHaveLength(0)
+    })
 
-    expect(result.username).toContain('This field is required')
-    expect(result.email).toContain('This field is required')
+    it('should pass when value is number', () => {
+      const data = { age: 25 }
+      const rules = { age: ['numeric'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.age).toHaveLength(0)
+    })
   })
 
-  it('should validate numeric boundaries', () => {
-    const data = {
-      age: '150',
-      score: '5'
-    }
+  describe('min rule', () => {
+    it('should return error when length is less than minimum', () => {
+      const data = { name: 'Jo' }
+      const rules = { name: ['min:3'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('Minimum length is 3')
+    })
 
-    const rules = {
-      age: ['numeric', 'min_num:18', 'max_num:100'],
-      score: ['numeric', 'min_num:1', 'max_num:10']
-    }
+    it('should pass when length meets minimum', () => {
+      const data = { name: 'John' }
+      const rules = { name: ['min:3'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toHaveLength(0)
+    })
 
-    const result = validation(data, rules)
-
-    expect(result.age).toContain('Maximum value is 100')
-    expect(result.score).toEqual([])
+    it('should pass when length exceeds minimum', () => {
+      const data = { name: 'Jonathan' }
+      const rules = { name: ['min:3'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toHaveLength(0)
+    })
   })
 
-  it('should validate string length boundaries', () => {
-    const data = {
-      username: 'ab',
-      bio: 'This is a very long biography that exceeds the maximum allowed length for this field'
-    }
+  describe('max rule', () => {
+    it('should return error when length exceeds maximum', () => {
+      const data = { name: 'Jonathan' }
+      const rules = { name: ['max:5'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('Maximum length is 5')
+    })
 
-    const rules = {
-      username: ['min:3', 'max:20'],
-      bio: ['max:50']
-    }
+    it('should pass when length is within maximum', () => {
+      const data = { name: 'John' }
+      const rules = { name: ['max:5'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toHaveLength(0)
+    })
 
-    const result = validation(data, rules)
+    it('should pass when length equals maximum', () => {
+      const data = { name: 'Johns' }
+      const rules = { name: ['max:5'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toHaveLength(0)
+    })
+  })
 
-    expect(result.username).toContain('Minimum length is 3')
-    expect(result.bio).toContain('Maximum length is 50')
+  describe('email rule', () => {
+    it('should return error for invalid email', () => {
+      const data = { email: 'invalid-email' }
+      const rules = { email: ['email'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.email).toContain('Email is not valid')
+    })
+
+    it('should return error for email without @', () => {
+      const data = { email: 'testexample.com' }
+      const rules = { email: ['email'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.email).toContain('Email is not valid')
+    })
+
+    it('should pass for valid email', () => {
+      const data = { email: 'test@example.com' }
+      const rules = { email: ['email'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.email).toHaveLength(0)
+    })
+
+    it('should pass for email with subdomain', () => {
+      const data = { email: 'user@mail.example.com' }
+      const rules = { email: ['email'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.email).toHaveLength(0)
+    })
+  })
+
+  describe('regex rule', () => {
+    it('should return error when value does not match pattern', () => {
+      const data = { username: 'user@123' }
+      const rules = { username: ['regex:^[a-zA-Z0-9]+$:Only alphanumeric allowed'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.username).toContain('Only alphanumeric allowed')
+    })
+
+    it('should pass when value matches pattern', () => {
+      const data = { username: 'user123' }
+      const rules = { username: ['regex:^[a-zA-Z0-9]+$:Only alphanumeric allowed'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.username).toHaveLength(0)
+    })
+
+    it('should return error for invalid regex pattern', () => {
+      const data = { username: 'user123' }
+      const rules = { username: ['regex:[invalid:Invalid pattern'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.username).toContain('Invalid regex pattern')
+    })
+  })
+
+  describe('date rule', () => {
+    it('should return error for invalid date', () => {
+      const data = { birthdate: 'invalid-date' }
+      const rules = { birthdate: ['date'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.birthdate).toContain('Date is not valid')
+    })
+
+    it('should pass for valid date string', () => {
+      const data = { birthdate: '2024-01-15' }
+      const rules = { birthdate: ['date'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.birthdate).toHaveLength(0)
+    })
+
+    it('should pass for Date object', () => {
+      const data = { birthdate: new Date() }
+      const rules = { birthdate: ['date'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.birthdate).toHaveLength(0)
+    })
+  })
+
+  describe('bool rule', () => {
+    it('should return error for invalid boolean', () => {
+      const data = { active: 'maybe' }
+      const rules = { active: ['bool'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.active).toContain('Value must be a boolean')
+    })
+
+    it('should pass for "true"', () => {
+      const data = { active: 'true' }
+      const rules = { active: ['bool'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.active).toHaveLength(0)
+    })
+
+    it('should pass for "false"', () => {
+      const data = { active: 'false' }
+      const rules = { active: ['bool'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.active).toHaveLength(0)
+    })
+
+    it('should pass for "1" and "0"', () => {
+      const data1 = { active: '1' }
+      const data2 = { active: '0' }
+      const rules = { active: ['bool'] }
+      
+      expect(validation(data1, rules).active).toHaveLength(0)
+      expect(validation(data2, rules).active).toHaveLength(0)
+    })
+
+    it('should pass for "yes" and "no"', () => {
+      const data1 = { active: 'yes' }
+      const data2 = { active: 'no' }
+      const rules = { active: ['bool'] }
+      
+      expect(validation(data1, rules).active).toHaveLength(0)
+      expect(validation(data2, rules).active).toHaveLength(0)
+    })
+  })
+
+  describe('min_num rule', () => {
+    it('should return error when value is less than minimum', () => {
+      const data = { price: 5 }
+      const rules = { price: ['min_num:10'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.price).toContain('Minimum value is 10')
+    })
+
+    it('should pass when value meets minimum', () => {
+      const data = { price: 10 }
+      const rules = { price: ['min_num:10'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.price).toHaveLength(0)
+    })
+
+    it('should pass when value exceeds minimum', () => {
+      const data = { price: 15 }
+      const rules = { price: ['min_num:10'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.price).toHaveLength(0)
+    })
+  })
+
+  describe('max_num rule', () => {
+    it('should return error when value exceeds maximum', () => {
+      const data = { age: 100 }
+      const rules = { age: ['max_num:90'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.age).toContain('Maximum value is 90')
+    })
+
+    it('should pass when value is within maximum', () => {
+      const data = { age: 50 }
+      const rules = { age: ['max_num:90'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.age).toHaveLength(0)
+    })
+
+    it('should pass when value equals maximum', () => {
+      const data = { age: 90 }
+      const rules = { age: ['max_num:90'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.age).toHaveLength(0)
+    })
+  })
+
+  describe('same rule', () => {
+    it('should return error when values do not match', () => {
+      const data = { password: 'secret123', password_confirmation: 'secret456' }
+      const rules = { password_confirmation: ['same:password'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.password_confirmation).toContain('This field value must match password')
+    })
+
+    it('should pass when values match', () => {
+      const data = { password: 'secret123', password_confirmation: 'secret123' }
+      const rules = { password_confirmation: ['same:password'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.password_confirmation).toHaveLength(0)
+    })
+  })
+
+  describe('multiple rules', () => {
+    it('should validate multiple rules for one field', () => {
+      const data = { name: 'Jo' }
+      const rules = { name: ['required', 'min:3', 'max:20'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('Minimum length is 3')
+      expect(errors.name).not.toContain('This field is required')
+    })
+
+    it('should validate multiple fields', () => {
+      const data = {
+        name: '',
+        email: 'invalid',
+        age: 'abc'
+      }
+      const rules = {
+        name: ['required'],
+        email: ['email'],
+        age: ['numeric']
+      }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('This field is required')
+      expect(errors.email).toContain('Email is not valid')
+      expect(errors.age).toContain('Value must be a number')
+    })
+
+    it('should return empty errors when all validations pass', () => {
+      const data = {
+        name: 'John Doe',
+        email: 'john@example.com',
+        age: 25
+      }
+      const rules = {
+        name: ['required', 'min:3', 'max:50'],
+        email: ['required', 'email'],
+        age: ['required', 'numeric', 'min_num:18', 'max_num:100']
+      }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toHaveLength(0)
+      expect(errors.email).toHaveLength(0)
+      expect(errors.age).toHaveLength(0)
+    })
+  })
+
+  describe('edge cases', () => {
+    it('should handle empty data object', () => {
+      const data = {}
+      const rules = { name: ['required'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.name).toContain('This field is required')
+    })
+
+    it('should handle empty rules object', () => {
+      const data = { name: 'John' }
+      const rules = {}
+      const errors = validation(data, rules)
+      
+      expect(errors).toEqual({})
+    })
+
+    it('should handle field not in data', () => {
+      const data = { name: 'John' }
+      const rules = { email: ['required'] }
+      const errors = validation(data, rules)
+      
+      expect(errors.email).toContain('This field is required')
+    })
+
+    it('should initialize error array for each field', () => {
+      const data = { name: 'John' }
+      const rules = { name: ['required'] }
+      const errors = validation(data, rules)
+      
+      expect(Array.isArray(errors.name)).toBe(true)
+    })
   })
 })

@@ -1,6 +1,5 @@
-export default function same(value, param) {
-  const otherField = String(param)
+export default function same(value, param, otherField) {
   if(value !== otherField) {
-    return `This field value must match ${otherField}`
+    return `This field value must match ${String(param)}`
   }
 }
