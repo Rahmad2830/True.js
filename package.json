@@ -1,6 +1,6 @@
 {
-  "types": "dist/esm.min.d.ts",
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
     "rollup": "^4.53.3",
     "rollup-plugin-dts": "^6.3.0",
     "rollup-plugin-esbuild": "^6.2.1",

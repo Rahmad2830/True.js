@@ -1,6 +1,8 @@
-export default function required(value) {
-  if(String(value).trim() === '' || value === null || value === undefined) {
-    return "This field is required"
+export default function required(message = "This field is required") {
+  return function (value) {
+    if(String(value).trim() === '' || value === null || value === undefined) {
+        return message
+      }
+    return null
   }
-  return null
 }

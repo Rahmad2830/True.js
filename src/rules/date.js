@@ -1,7 +1,18 @@
-export default function date(value) {
-  const d = new Date(value)
-  if(isNaN(d.getTime())) {
-    return "Date is not valid"
+export default function date(message = "Date is not valid") {
+  return function (value) {
+    if (value === null || value === undefined) {
+      return null
+    }
+    
+    const str = String(value).trim()
+    if (str === "") {
+      return null
+    }
+    
+    const d = new Date(str)
+    if (isNaN(d.getTime())) {
+      return message
+    }
+    return null
   }
-  return null
 }
